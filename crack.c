@@ -32,7 +32,25 @@ char * getCert(char *email)
 {
 	
 }
-//void listDB();
+
+void listDB()
+{
+	FILE *ifp;
+	char line[EMAIL_MAX_LENGTH]; 
+	char cert[10];
+
+	ifp = fopen("db.txt","r");
+	if(ifp == NULL)
+	{
+		fprintf(stderr, "Can't open input file db.txt!\n");
+		return;
+	}
+	while (fgets(line,sizeof(line)-1,ifp)!=NULL) {
+  	printf("%s", line);
+  }
+  fclose(ifp);
+}
+
 void sendMSG()
 {
 	FILE *fp;
@@ -352,7 +370,7 @@ int main()
 		switch(n)
 		{
 			case 1: 
-					//listDB();
+					listDB();
 					break;
 			case 2: 
 					sendMSG();
