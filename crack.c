@@ -19,6 +19,9 @@ char *verify_sha_cmd = "openssl dgst -sha1 -verify ";
 char *send_msg=""; //final message
 char *dec_session_key_cmd = "openssl rsautl -decrypt -inkey private_key.pem -in session_key.bin -passin pass:cookies";
 
+char *curl_cmd = "curl ";
+
+
 char* concat(char *s1, char *s2)
 {
     char *result = malloc(strlen(s1)+strlen(s2)+1);//+1 for the zero-terminator
@@ -30,6 +33,160 @@ char* concat(char *s1, char *s2)
 
 char * getCert(char *email)
 {
+	FILE *ifp,*ofp;
+	FILE *fp;
+	char line[EMAIL_MAX_LENGTH];
+
+	
+
+	char certCheck[EMAIL_MAX_LENGTH];
+
+	ifp = fopen("db.txt","r");
+	if(ifp == NULL)
+	{
+		fclose(ifp);
+		ofp = fopen("CertificateRepo.txt","r");
+		while (fgets(line,sizeof(line)-1,ofp)!=NULL)
+		{
+			
+			char unity[EMAIL_MAX_LENGTH];
+			char url[EMAIL_MAX_LENGTH];
+			
+			int n;
+			
+			if(2 == sscanf(line, "%[^ ,],%[^ \n] %n", unity, url, &n) && line[n] == '\0')
+			{
+				//printf("%s",url);
+
+				size_t length = strlen(unity);
+				if(unity[length-1]=='\n')
+				{
+					//printf("Here");
+					unity[length-1] = '\0';
+				}
+				//printf("%s",unity);
+				//break;
+				if(strcmp(email,unity)==0)
+				{
+					//printf("Here");
+
+					fclose(ofp);
+
+					char *unity_pem = concat(unity,".pem");
+
+					char *cmd = concat(curl_cmd,url);
+					cmd = concat(cmd," > ");
+					cmd = concat(cmd,unity_pem);
+
+					system(cmd);
+
+					//printf("%s\n", cmd);
+
+					char *verify_cert = concat(verify_cmd,unity_pem);
+
+					fp = popen(verify_cert,"r");
+					fgets(certCheck,sizeof(certCheck)-1,fp);
+					pclose(fp);
+
+					//printf("%s\n", certCheck);
+
+					char *verify_cert_OK = concat(unity_pem,": OK\n");
+
+					if(strcmp(certCheck,verify_cert_OK)==0)
+					{
+						ifp = fopen("db.txt","w");
+						fprintf(ifp,"%s %s\n",unity, unity_pem);
+						fclose(ifp);
+
+						return unity_pem;
+					}
+				}
+			
+			 }
+		}
+
+	}
+
+	char user[100];
+	char cert[100];
+	int not_found = 1;
+
+	while (fscanf(ifp,"%s %[^\n]s", user,cert)!=EOF) {
+  	//printf("%s %s", user,cert);
+		if(strcmp(email,user)==0)
+		{
+			//printf("Here");
+			//printf("%s",cert);
+			not_found = 0;
+			char *pem_file = cert;
+			return pem_file;
+		}
+  }
+  fclose(ifp);
+
+  if(not_found == 1)
+  {
+  	ofp = fopen("CertificateRepo.txt","r");
+		while (fgets(line,sizeof(line)-1,ofp)!=NULL)
+		{
+			
+			char unity[EMAIL_MAX_LENGTH];
+			char url[EMAIL_MAX_LENGTH];
+			
+			int n;
+			
+			if(2 == sscanf(line, "%[^ ,],%[^ \n] %n", unity, url, &n) && line[n] == '\0')
+			{
+				//printf("%s",url);
+
+				size_t length = strlen(unity);
+				if(unity[length-1]=='\n')
+				{
+					//printf("Here");
+					unity[length-1] = '\0';
+				}
+				//printf("%s",unity);
+				//break;
+				if(strcmp(email,unity)==0)
+				{
+					//printf("Here");
+
+					fclose(ofp);
+
+					char *unity_pem = concat(unity,".pem");
+
+					char *cmd = concat(curl_cmd,url);
+					cmd = concat(cmd," > ");
+					cmd = concat(cmd,unity_pem);
+
+					system(cmd);
+
+					//printf("%s\n", cmd);
+
+					char *verify_cert = concat(verify_cmd,unity_pem);
+
+					fp = popen(verify_cert,"r");
+					fgets(certCheck,sizeof(certCheck)-1,fp);
+					pclose(fp);
+
+					//printf("%s\n", certCheck);
+
+					char *verify_cert_OK = concat(unity_pem,": OK\n");
+
+					if(strcmp(certCheck,verify_cert_OK)==0)
+					{
+						ifp = fopen("db.txt","a");
+						fprintf(ifp,"%s %s\n",unity, unity_pem);
+						fclose(ifp);
+
+						return unity_pem;
+					}
+				}
+			
+			 }
+		}
+
+  }
 	
 }
 
@@ -37,7 +194,8 @@ void listDB()
 {
 	FILE *ifp;
 	char line[EMAIL_MAX_LENGTH]; 
-	char cert[10];
+	char user[100];
+	char cert[100];
 
 	ifp = fopen("db.txt","r");
 	if(ifp == NULL)
@@ -45,8 +203,11 @@ void listDB()
 		fprintf(stderr, "Can't open input file db.txt!\n");
 		return;
 	}
-	while (fgets(line,sizeof(line)-1,ifp)!=NULL) {
-  	printf("%s", line);
+	// while (fgets(line,sizeof(line)-1,ifp)!=NULL) {
+ //  	printf("%s", line);
+
+  	while (fscanf(ifp,"%s %[^\n]s", user,cert)!=EOF) {
+  	printf("%s %s\n", user,cert);
   }
   fclose(ifp);
 }
@@ -65,12 +226,19 @@ void sendMSG()
 	scanf("%s",email);
 	scanf(" %[^\n]s",msg);
 	//printf("%s",email);
-	char *verify_cert = concat(verify_cmd,"1021.pem");
+
+	char *cert = getCert(email);
+	printf("%s",cert);
+
+	char *verify_cert = concat(verify_cmd,cert);
 	fp = popen(verify_cert,"r");
 	fgets(certCheck,sizeof(certCheck)-1,fp);
 	pclose(fp);
 
-	if(strcmp(certCheck,"1021.pem: OK\n")==0)
+
+	char *verify_cert_OK = concat(cert,": OK\n");
+
+	if(strcmp(certCheck,verify_cert_OK)==0)
 	{
 		fp = popen(randomPassword_cmd,"r");
 		//fgets(randPwd,sizeof(randPwd)-1,fp);
@@ -91,14 +259,19 @@ void sendMSG()
 		pclose(fp);
 		//printf("%s\n", enc_text);
 
-		char *extract_pubKey1 = concat(extract_pubKey,"1021.pem > 1021_pub.pem");
+		char *publicKey = concat(cert, " > ");
+		char *publicKey1 = concat(email, "_pub.pem");
+
+		char *publicKey_extract = concat(publicKey,publicKey1);
+
+		char *extract_pubKey1 = concat(extract_pubKey,publicKey_extract);
 		system(extract_pubKey1);
 
 		char *echo_ms = concat("echo ", randPwd);
 		//printf("%s",echo_ms);
 
 		char *enc_pwd_noPubkey = concat(echo_ms, enc_pwd_cmd);
-		char *enc_pwd_wPubkey_cmd = concat(enc_pwd_noPubkey, "1021_pub.pem");
+		char *enc_pwd_wPubkey_cmd = concat(enc_pwd_noPubkey, publicKey1);
 		//printf("%s",enc_pwd_wPubkey);
 		system(enc_pwd_wPubkey_cmd);
 
@@ -189,21 +362,36 @@ void rcvMSG()
 		FILE *fp;
 		FILE *pp;
 		char certCheck[EMAIL_MAX_LENGTH];
+		char *email = "sramakr6";
 
-		char *verify_cert = concat(verify_cmd,"1021.pem");
+		//scanf("%s",email);
+		char *cert = getCert(email);
+		//printf("%s",cert);
+
+		char *verify_cert = concat(verify_cmd,cert);
 
 		fp = popen(verify_cert,"r");
 		fgets(certCheck,sizeof(certCheck)-1,fp);
 		pclose(fp);
 
+		//printf("%s",certCheck);
+
 		char line[EMAIL_MAX_LENGTH];
 
-		char rcvd_msg[15][EMAIL_MAX_LENGTH];
+		char rcvd_msg[20][EMAIL_MAX_LENGTH];
 
-		if(strcmp(certCheck,"1021.pem: OK\n")==0)
+		char *verify_cert_OK = concat(cert,": OK\n");
+
+		if(strcmp(certCheck,verify_cert_OK)==0)
 		{	
 			
-			char *extract_pubKey1 = concat(extract_pubKey,"1021.pem > 1021_pub.pem");
+			char *publicKey = concat(cert, " > ");
+			char *publicKey1 = concat(email, "_pub.pem");
+
+			char *publicKey_extract = concat(publicKey,publicKey1);
+
+			char *extract_pubKey1 = concat(extract_pubKey,publicKey_extract);
+			//printf("%s",extract_pubKey1);
 			system(extract_pubKey1);
 
 			fp = fopen("send_msg.txt","r"); 
@@ -275,9 +463,9 @@ void rcvMSG()
 			//printf("%s",base64_dec);	
 			system(base64_dec);
 
-			char *verify_sha = concat(verify_sha_cmd, "1021_pub.pem");
+			char *verify_sha = concat(verify_sha_cmd, publicKey1);
 			verify_sha = concat(verify_sha, " -signature ");
-			verify_sha = concat(verify_sha, "signed_cont_cipher.sha1 ");
+			verify_sha = concat(verify_sha, "signed_cont_cipher.sha1");
 			verify_sha = concat(verify_sha, " content.txt");
 
 			//printf("%s",verify_sha);
