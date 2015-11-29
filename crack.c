@@ -228,7 +228,7 @@ void sendMSG()
 	//printf("%s",email);
 
 	char *cert = getCert(email);
-	printf("%s",cert);
+	//printf("%s",cert);
 
 	char *verify_cert = concat(verify_cmd,cert);
 	fp = popen(verify_cert,"r");
@@ -244,7 +244,7 @@ void sendMSG()
 		//fgets(randPwd,sizeof(randPwd)-1,fp);
 		fscanf(fp, "%s", randPwd);
 		pclose(fp);
-		printf("%s", randPwd);
+		//printf("%s", randPwd);
 
 		char *echo_msg = concat("echo ",msg);
 		//char *echo_msg1 = concat(echo_msg,"\"");
@@ -295,7 +295,7 @@ void sendMSG()
 		char *temp2 = concat(temp1,"\"");
 		char *signed_enc_text_cmd = concat(temp2, sign_enc_text_cmd);
 
-		printf("%s",signed_enc_text_cmd);
+		//printf("%s",signed_enc_text_cmd);
 		system(signed_enc_text_cmd);
 		//printf("%s",signed_enc_text_cmd);
 
@@ -318,7 +318,7 @@ void sendMSG()
 		//Begin Formatting
 
 		char *to_email = concat("to: ",email);
-		char *from_to = concat("from: sramakr6@ncsu.edu,",to_email); 
+		char *from_to = concat("from: sramakr6,",to_email); 
 		char *from_to_msg = concat(from_to,"\n"); //First Line
 
 		char *begin_msg = concat(from_to_msg, "-----BEGIN CSC574 MESSAGE-----\n"); //Second line
@@ -345,7 +345,7 @@ void sendMSG()
 		fp = fopen("send_msg.txt", "w");
 		fprintf(fp,"%s",send_msg);
 
-		printf("%s", send_msg);
+		printf("%s\n", send_msg);
 
 
 
@@ -404,6 +404,23 @@ void rcvMSG()
 			}
 
 			fclose(fp);
+
+			char *from_header = rcvd_msg[0];
+			//printf("%s", from_header);
+			int count = 6;
+			while(from_header[count]!=',')
+			{
+				printf("%c", from_header[count]);
+				count++;
+			}
+			//printf("%d",count);
+			// char sender[count-6+1];
+
+			// memcpy(sender, &from_header[6], count-6);
+			// sender[count-6] = '\0';
+
+			// printf("%s",sender);
+
 
 			char *content = rcvd_msg[2];
 			int newlineflag=0;
