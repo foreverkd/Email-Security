@@ -362,39 +362,14 @@ void rcvMSG()
 		FILE *fp;
 		FILE *pp;
 		char certCheck[EMAIL_MAX_LENGTH];
-		char *email = "sramakr6";
-
-		//scanf("%s",email);
-		char *cert = getCert(email);
-		//printf("%s",cert);
-
-		char *verify_cert = concat(verify_cmd,cert);
-
-		fp = popen(verify_cert,"r");
-		fgets(certCheck,sizeof(certCheck)-1,fp);
-		pclose(fp);
-
-		//printf("%s",certCheck);
+		//char *email = "sramakr6";
 
 		char line[EMAIL_MAX_LENGTH];
 
 		char rcvd_msg[20][EMAIL_MAX_LENGTH];
 
-		char *verify_cert_OK = concat(cert,": OK\n");
 
-		if(strcmp(certCheck,verify_cert_OK)==0)
-		{	
-			
-			char *publicKey = concat(cert, " > ");
-			char *publicKey1 = concat(email, "_pub.pem");
-
-			char *publicKey_extract = concat(publicKey,publicKey1);
-
-			char *extract_pubKey1 = concat(extract_pubKey,publicKey_extract);
-			//printf("%s",extract_pubKey1);
-			system(extract_pubKey1);
-
-			fp = fopen("send_msg.txt","r"); 
+		fp = fopen("send_msg.txt","r"); 
 			int i=0;
 			while(fgets(line,sizeof(line),fp)) 
 			{
@@ -410,9 +385,63 @@ void rcvMSG()
 			int count = 6;
 			while(from_header[count]!=',')
 			{
-				printf("%c", from_header[count]);
+				//printf("%c", from_header[count]);
 				count++;
 			}
+
+			char sender[count-6+1];
+
+			memcpy(sender, &from_header[6], count-6);
+			sender[count-6] = '\0';
+
+			printf("%s\n",sender);
+
+		//scanf("%s",email);
+		char *cert = getCert(sender);
+		//printf("%s",cert);
+
+		char *verify_cert = concat(verify_cmd,cert);
+
+		fp = popen(verify_cert,"r");
+		fgets(certCheck,sizeof(certCheck)-1,fp);
+		pclose(fp);
+
+		//printf("%s",certCheck);
+
+		
+		char *verify_cert_OK = concat(cert,": OK\n");
+
+		if(strcmp(certCheck,verify_cert_OK)==0)
+		{	
+			
+			char *publicKey = concat(cert, " > ");
+			char *publicKey1 = concat(sender, "_pub.pem");
+
+			char *publicKey_extract = concat(publicKey,publicKey1);
+
+			char *extract_pubKey1 = concat(extract_pubKey,publicKey_extract);
+			//printf("%s",extract_pubKey1);
+			system(extract_pubKey1);
+
+			// fp = fopen("send_msg.txt","r"); 
+			// int i=0;
+			// while(fgets(line,sizeof(line),fp)) 
+			// {
+			// 	strcpy(rcvd_msg[i],line);
+			// 	//printf("Next line %s",rcvd_msg[i]);
+			// 	i++;
+			// }
+
+			// fclose(fp);
+
+			// char *from_header = rcvd_msg[0];
+			// //printf("%s", from_header);
+			// int count = 6;
+			// while(from_header[count]!=',')
+			// {
+			// 	printf("%c", from_header[count]);
+			// 	count++;
+			// }
 			//printf("%d",count);
 			// char sender[count-6+1];
 
@@ -445,13 +474,13 @@ void rcvMSG()
 
 			//printf("%s",content);
 
-			fp = fopen("content.txt", "w");
-			fprintf(fp,"%s",content);
-			fclose(fp);
+		 	fp = fopen("content.txt", "w");
+		 	fprintf(fp,"%s",content);
+		 	fclose(fp);
 
 
 
-			char *signed_content = rcvd_msg[i+1];
+		 	char *signed_content = rcvd_msg[i+1];
 			int j;
 			for(j=i+2;j<15;j++) 
 			{
@@ -493,7 +522,7 @@ void rcvMSG()
 			pclose(pp);
 			//printf("%s",verify_res);
 
-			//system(verify_sha);
+		// 	//system(verify_sha);
 
 			if(strcmp(verify_res,"Verified OK\n")==0)
 			{
@@ -510,6 +539,8 @@ void rcvMSG()
 				if (session_key[length-1] == '\n') {
 					session_key[length-1] = '\0';
 				}
+
+				//printf("%s\n", session_key);
 
 				fp = fopen("session_key.txt", "w");
 				fprintf(fp,"%s",session_key);
@@ -539,6 +570,7 @@ void rcvMSG()
 				}
 
 
+
 				length = strlen(dec_text);
 				if (dec_text[length-1] == '\n') {
 					dec_text[length-1] = '\0';
@@ -546,17 +578,25 @@ void rcvMSG()
 
 				//printf("%s",dec_text);
 
-				char *dec_text_cmd = concat("echo ",dec_text);
-				dec_text_cmd = concat(dec_text_cmd," | openssl enc -aes-256-cbc -d -base64 -pass pass:");
-				dec_text_cmd = concat(dec_text_cmd,dec_key);
+				fp = fopen("cipher_text.txt", "w");
+				fprintf(fp,"%s\n",dec_text);
+				fclose(fp);
 
-				//printf("%s",dec_text_cmd );
+
+				 char *dec_text_cmd = concat("echo ",dec_text);
+				dec_text_cmd = concat(dec_text_cmd," | openssl enc -aes-256-cbc -d -base64 -pass pass:");
+				 //dec_text_cmd = concat(" | openssl enc -aes-256-cbc -d -base64 -pass pass:",dec_key);
+				dec_text_cmd = concat(dec_text_cmd,dec_key);
+				//dec_text_cmd = concat(dec_text_cmd," -in cipher_text.txt.enc");
+				
+
+				//printf("%s",dec_text_cmd);
 				system(dec_text_cmd);
 
 
 
-			}
-		}
+		 	}
+		 }
 
 }
 
