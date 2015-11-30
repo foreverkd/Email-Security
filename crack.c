@@ -216,6 +216,7 @@ void sendMSG()
 {
 	FILE *fp;
 	printf("Enter destination email address and message\n");
+    char get_email[EMAIL_MAX_LENGTH];
 	char email[EMAIL_MAX_LENGTH];
 	char msg[EMAIL_MAX_LENGTH];
 	char certCheck[EMAIL_MAX_LENGTH];
@@ -223,9 +224,16 @@ void sendMSG()
 	char enc_text[EMAIL_MAX_LENGTH];
 	char enc_pwd_wPubkey[EMAIL_MAX_LENGTH];
 	char signed_enc_text[EMAIL_MAX_LENGTH];
-	scanf("%s",email);
+	scanf("%s",get_email);
 	scanf(" %[^\n]s",msg);
-	//printf("%s",email);
+	//printf("get email is %s",email);
+    
+    int k=0;
+    for(int i=0;get_email[i]!='@';i++) {
+        email[k++]=get_email[i];
+    }
+    
+    //printf("email is %s",email);
 
 	char *cert = getCert(email);
 	//printf("%s",cert);
@@ -345,7 +353,9 @@ void sendMSG()
 		fp = fopen("send_msg.txt", "w");
 		fprintf(fp,"%s",send_msg);
 
-		printf("%s\n", send_msg);
+		printf("\n%s\n", send_msg);
+        
+        fclose(fp);
 
 
 
@@ -362,9 +372,20 @@ void rcvMSG()
 		FILE *fp;
 		FILE *pp;
 		char certCheck[EMAIL_MAX_LENGTH];
-		char *email = "sramakr6";
+    
+        //char *email = "sramakr6";
+        char *sender_email = malloc(sizeof(char)*EMAIL_MAX_LENGTH);
+        char *email = malloc(sizeof(char)*EMAIL_MAX_LENGTH);
 
-		//scanf("%s",email);
+        printf("Enter the sender's email address whose message is to be fetched\n");
+		scanf("%s",sender_email);
+    
+        int k=0;
+        for(int i=0;sender_email[i]!='@';i++) {
+            email[k++]=sender_email[i];
+        }
+    
+    
 		char *cert = getCert(email);
 		//printf("%s",cert);
 
