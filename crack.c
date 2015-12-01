@@ -193,7 +193,7 @@ char * getCert(char *email)
 void listDB()
 {
 	FILE *ifp;
-	char line[EMAIL_MAX_LENGTH]; 
+	//char line[EMAIL_MAX_LENGTH]; 
 	char user[100];
 	char cert[100];
 
@@ -223,7 +223,7 @@ void sendMSG()
 	char randPwd[EMAIL_MAX_LENGTH];
 	char enc_text[EMAIL_MAX_LENGTH];
 	char enc_pwd_wPubkey[EMAIL_MAX_LENGTH];
-	char signed_enc_text[EMAIL_MAX_LENGTH];
+	//char signed_enc_text[EMAIL_MAX_LENGTH];
 	scanf("%s",get_email);
 	scanf(" %[^\n]s",msg);
 	//printf("get email is %s",email);
@@ -325,8 +325,8 @@ void sendMSG()
 
 		//Begin Formatting
 
-		char *to_email = concat("to: ",email);
-		char *from_to = concat("from: sramakr6,",to_email); 
+		char *to_email = concat("to: ",get_email);
+		char *from_to = concat("from: sramakr6@ncsu.edu,",to_email); 
 		char *from_to_msg = concat(from_to,"\n"); //First Line
 
 		char *begin_msg = concat(from_to_msg, "-----BEGIN CSC574 MESSAGE-----\n"); //Second line
@@ -350,8 +350,8 @@ void sendMSG()
 		// //printf("%s",t);
 		// system(t);
         
-        char *filename = concat(email,".txt");
-		fp = fopen(filename, "w");
+        //char *filename = concat("send_msg,".txt");
+		fp = fopen("send_msg.txt", "w");
 		fprintf(fp,"%s",send_msg);
 
 		printf("\n%s\n", send_msg);
@@ -377,24 +377,21 @@ void rcvMSG()
         char certCheck[EMAIL_MAX_LENGTH];
     
         //char *email = "sramakr6";
-        char *sender_email = malloc(sizeof(char)*EMAIL_MAX_LENGTH);
+        //char *sender_email = malloc(sizeof(char)*EMAIL_MAX_LENGTH);
         char *email = malloc(sizeof(char)*EMAIL_MAX_LENGTH);
 
 		char line[EMAIL_MAX_LENGTH];
 
 		char rcvd_msg[20][EMAIL_MAX_LENGTH];
 
-        printf("Enter the email address of sender whose message is to be fetched\n");
-        scanf("%s",sender_email);
+        //printf("Enter the email address of sender whose message is to be fetched\n");
+        //scanf("%s",sender_email);
     
-        int k=0;
-        for(int i=0;sender_email[i]!='@';i++) {
-            email[k++]=sender_email[i];
-        }
+        
     
-        char *filename = concat(email,".txt");
+        //char *filename = concat(email,".txt");
     
-		fp = fopen(filename,"r");
+		fp = fopen("send_msg.txt","r");
 			int i=0;
 			while(fgets(line,sizeof(line),fp)) 
 			{
@@ -421,8 +418,15 @@ void rcvMSG()
 
 			printf("%s\n",sender);
 
+			int k=0;
+        for(int j=0;sender[j]!='@';j++) {
+            email[k++]=sender[j];
+        }
+
+        //printf("%s",email)
+
 		//scanf("%s",email);
-		char *cert = getCert(sender);
+		char *cert = getCert(email);
 
 		//printf("%s",cert);
 
