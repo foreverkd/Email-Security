@@ -384,19 +384,20 @@ void rcvMSG()
         //char *email = "sramakr6";
         //char *sender_email = malloc(sizeof(char)*EMAIL_MAX_LENGTH);
         char *email = malloc(sizeof(char)*EMAIL_MAX_LENGTH);
+        char sender_email[EMAIL_MAX_LENGTH];
 
 		char line[EMAIL_MAX_LENGTH];
 
 		char rcvd_msg[100][EMAIL_MAX_LENGTH];
 
-        //printf("Enter the email address of sender whose message is to be fetched\n");
-        //scanf("%s",sender_email);
+        printf("Enter the input file\n");
+        scanf("%s",sender_email);
     
         
     
         //char *filename = concat(email,".txt");
     
-		fp = fopen("sbanda_msg","r");
+		fp = fopen(sender_email,"r");
 			int i=0;
 			while(fgets(line,sizeof(line),fp)) 
 			{
