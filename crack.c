@@ -387,7 +387,7 @@ void rcvMSG()
 
 		char line[EMAIL_MAX_LENGTH];
 
-		char rcvd_msg[20][EMAIL_MAX_LENGTH];
+		char rcvd_msg[100][EMAIL_MAX_LENGTH];
 
         //printf("Enter the email address of sender whose message is to be fetched\n");
         //scanf("%s",sender_email);
@@ -396,7 +396,7 @@ void rcvMSG()
     
         //char *filename = concat(email,".txt");
     
-		fp = fopen("send_msg.txt","r");
+		fp = fopen("sbanda_msg","r");
 			int i=0;
 			while(fgets(line,sizeof(line),fp)) 
 			{
@@ -450,7 +450,7 @@ void rcvMSG()
 		{	
 			
 			char *publicKey = concat(cert, " > ");
-			char *publicKey1 = concat(sender, "_pub.pem");
+			char *publicKey1 = concat(email, "_pub.pem");
 
 			char *publicKey_extract = concat(publicKey,publicKey1);
 
