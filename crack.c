@@ -5,7 +5,7 @@
 #define EMAIL_MAX_LENGTH 1024
 char *verify_cmd = "openssl verify -CAfile root-ca.crt ";
 char *randomPassword_cmd = "openssl rand -base64 32";
-char *enc_cmd = " | openssl enc -aes-256-cbc -base64 -pass pass:";
+char *enc_cmd = "openssl enc -aes-256-cbc -base64 -pass pass:";
 char *extract_pubKey = "openssl x509 -pubkey -in ";
 
 char *enc_pwd_cmd =" | openssl rsautl -out file.bin -encrypt -pubin -inkey ";
@@ -215,7 +215,7 @@ void listDB()
 void sendMSG()
 {
 	FILE *fp;
-	printf("Enter destination email address and message\n");
+	printf("Enter destination email address\n");
     char get_email[EMAIL_MAX_LENGTH];
 	char email[EMAIL_MAX_LENGTH];
 	char msg[EMAIL_MAX_LENGTH];
@@ -225,6 +225,8 @@ void sendMSG()
 	char enc_pwd_wPubkey[EMAIL_MAX_LENGTH];
 	//char signed_enc_text[EMAIL_MAX_LENGTH];
 	scanf("%s",get_email);
+
+	printf("Enter input file name\n");
 	scanf(" %[^\n]s",msg);
 	//printf("get email is %s",email);
     
@@ -254,12 +256,15 @@ void sendMSG()
 		pclose(fp);
 		//printf("%s", randPwd);
 
-		char *echo_msg = concat("echo ",msg);
+		//char *echo_msg = concat("echo ",msg);
 		//char *echo_msg1 = concat(echo_msg,"\"");
 
-		char *enc_cmd_noPwd = concat(echo_msg,enc_cmd);
+		//char *enc_cmd_noPwd = concat(echo_msg,enc_cmd);
 
-		char *enc_cmd_wPwd = concat(enc_cmd_noPwd, randPwd);
+		//char *enc_cmd_wPwd = concat(enc_cmd_noPwd, randPwd);
+		char *enc_cmd_wPwd = concat(enc_cmd, randPwd);
+		enc_cmd_wPwd = concat(enc_cmd_wPwd, " -in ");
+		enc_cmd_wPwd = concat(enc_cmd_wPwd,msg);
 
 		fp = popen(enc_cmd_wPwd,"r");
 		//fgets(enc_text,sizeof(enc_text)-1,fp);
