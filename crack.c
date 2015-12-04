@@ -2,19 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define EMAIL_MAX_LENGTH 1024
+#define EMAIL_MAX_LENGTH 2000
 char *verify_cmd = "openssl verify -CAfile root-ca.crt ";
 char *randomPassword_cmd = "openssl rand -base64 32";
-char *enc_cmd = "openssl enc -aes-256-cbc -base64 -pass pass:";
+char *enc_cmd = "openssl enc -aes-256-cbc -e -base64 -pass pass:";
 char *extract_pubKey = "openssl x509 -pubkey -in ";
 
 char *enc_pwd_cmd =" | openssl rsautl -out file.bin -encrypt -pubin -inkey ";
-char *sign_enc_text_cmd =" | openssl dgst -sha1 -sign private_key.pem -out signed.sha1";
+char *sign_enc_text_cmd ="openssl dgst -sha1 -sign private_key.pem -out signed.sha1 enc_pwd.txt";
 //char *sign_enc_pwd_cmd ="openssl dgst -sha1 -sign private_key.pem -out enc_pwd.sha1 file.bin";
 char *base64_enc_cmd = "openssl enc -base64 -in file.bin";
 char *base64_dec_cmd = "openssl enc -base64 -d -in ";
 char *base64_sign_cmd = "openssl enc -base64 -in signed.sha1";
 char *verify_sha_cmd = "openssl dgst -sha1 -verify ";
+
+char *name_from_cert = "openssl x509 -noout -subject -in ";
 
 char *send_msg=""; //final message
 char *dec_session_key_cmd = "openssl rsautl -decrypt -inkey private_key.pem -in session_key.bin -passin pass:cookies";
@@ -221,7 +223,7 @@ void sendMSG()
 	char msg[EMAIL_MAX_LENGTH];
 	char certCheck[EMAIL_MAX_LENGTH];
 	char randPwd[EMAIL_MAX_LENGTH];
-	char enc_text[EMAIL_MAX_LENGTH];
+	//char enc_text[EMAIL_MAX_LENGTH];
 	char enc_pwd_wPubkey[EMAIL_MAX_LENGTH];
 	//char signed_enc_text[EMAIL_MAX_LENGTH];
 	scanf("%s",get_email);
@@ -266,11 +268,38 @@ void sendMSG()
 		enc_cmd_wPwd = concat(enc_cmd_wPwd, " -in ");
 		enc_cmd_wPwd = concat(enc_cmd_wPwd,msg);
 
+		//printf("%s\n", enc_cmd_wPwd);
+		
 		fp = popen(enc_cmd_wPwd,"r");
 		//fgets(enc_text,sizeof(enc_text)-1,fp);
-		fscanf(fp, "%s", enc_text);
+		//fscanf(fp, "%s", enc_text);
+
+		char *enc_text="";
+
+		char lineByLine[EMAIL_MAX_LENGTH];
+		while (fgets(lineByLine, sizeof(lineByLine)-1, fp) != NULL) {
+    		//size_t length = strlen(enc_pwd_wPubkey);
+			//if (enc_pwd_wPubkey[length-1] == '\n')
+			//{
+    				//enc_pwd_wPubkey[length-1] = '\0';
+					enc_text = concat(enc_text,lineByLine);
+			//}
+  		}
 		pclose(fp);
+
+		
+
+		size_t length = strlen(enc_text);
+			if (enc_text[length-1] == '\n') {
+				
+				enc_text[length-1] = '\0';
+			}
 		//printf("%s\n", enc_text);
+
+			fp = fopen("enc_text.txt", "w");
+		 	fprintf(fp,"%s",enc_text);
+		 	fclose(fp);
+
 
 		char *publicKey = concat(cert, " > ");
 		char *publicKey1 = concat(email, "_pub.pem");
@@ -302,14 +331,23 @@ void sendMSG()
 		pclose(fp);
 		//printf("%s",enc_pwd);
 
-		char *signed_echo = concat("printf \"",enc_pwd);
-		char *temp = concat(signed_echo,"\n");
-		char *temp1 = concat(temp,enc_text);
-		char *temp2 = concat(temp1,"\"");
-		char *signed_enc_text_cmd = concat(temp2, sign_enc_text_cmd);
+		fp = fopen("enc_pwd.txt", "w");
+		 	fprintf(fp,"%s\n",enc_pwd);
+		 	fclose(fp);
+
+
+		system("cat enc_text.txt >> enc_pwd.txt");
+
+		// char *signed_echo = concat("printf \"",enc_pwd);
+		// char *temp = concat(signed_echo,"\n");
+		// char *temp1 = concat(temp,enc_text);
+		// char *temp2 = concat(temp1,"\"");
+		// char *signed_enc_text_cmd = concat(temp2, sign_enc_text_cmd);
+
+		system(sign_enc_text_cmd);
 
 		//printf("%s",signed_enc_text_cmd);
-		system(signed_enc_text_cmd);
+		//system(signed_enc_text_cmd);
 		//printf("%s",signed_enc_text_cmd);
 
 		fp = popen(base64_sign_cmd,"r");
@@ -325,7 +363,7 @@ void sendMSG()
 			//}
   		}
   		pclose(fp);
-		//printf("%s",signed_content);
+		printf("%s",signed_content);
 
 
 		//Begin Formatting
@@ -422,7 +460,7 @@ void rcvMSG()
 			memcpy(sender, &from_header[6], count-6);
 			sender[count-6] = '\0';
 
-			printf("%s\n",sender);
+			//printf("%s\n",sender);
 
 			int k=0;
         for(int j=0;sender[j]!='@';j++) {
@@ -450,6 +488,42 @@ void rcvMSG()
 		if(strcmp(certCheck,verify_cert_OK)==0)
 		{	
 			
+			char *name_from_cert_cmd = concat(name_from_cert,cert);
+
+			char name1 [EMAIL_MAX_LENGTH];
+
+			fp = popen(name_from_cert_cmd,"r");
+			fgets(name1,sizeof(name1)-1,fp);
+			pclose(fp);
+
+			//printf("%s\n",name1);
+
+			char *ret = strstr(name1, "CN");
+
+			int z =0;
+			if(ret == NULL)
+			{
+				printf("Sender name not found\n");
+			}
+			else
+			{
+				printf("Name is ");
+				while(name1[z]!='\0')
+				{
+					if(name1[z]=='C' && name1[z+1] == 'N')
+					{
+						int y =z+3;
+						while(name1[y]!='/')
+						{
+							printf("%c",name1[y]);
+							y++;
+						}	
+					}
+					z++;
+				}
+				printf("\n");
+			}
+
 			char *publicKey = concat(cert, " > ");
 			char *publicKey1 = concat(email, "_pub.pem");
 
@@ -490,7 +564,7 @@ void rcvMSG()
 			char *content = rcvd_msg[2];
 			int newlineflag=0;
 			//printf("total %d lines", i);
-			for(i=3;i<15;i++) 
+			for(i=3;i<100;i++) 
 			{
 				if (strcmp(rcvd_msg[i],"\n") == 0 && newlineflag==1)
 					break;
@@ -518,7 +592,7 @@ void rcvMSG()
 
 		 	char *signed_content = rcvd_msg[i+1];
 			int j;
-			for(j=i+2;j<15;j++) 
+			for(j=i+2;j<100;j++) 
 			{
 				if (strcmp(rcvd_msg[j],"-----END CSC574 MESSAGE-----") == 0)
 					break;
@@ -564,7 +638,7 @@ void rcvMSG()
 			{
 				//printf("im here");
 				char *session_key = rcvd_msg[2];
-				for(i=3;i<15;i++) 
+				for(i=3;i<100;i++) 
 				{
 					if (strcmp(rcvd_msg[i],"\n") == 0)
 						break;	
@@ -595,10 +669,10 @@ void rcvMSG()
 				fscanf(pp,"%s",dec_key);
 				pclose(pp);
 
-				//printf("key %s\n",dec_key);
+				//printf("key %s",dec_key);
 
 				char *dec_text = rcvd_msg[i+1];
-				for(j=i+2;j<15;j++) 
+				for(j=i+2;j<100;j++) 
 				{
 					if (strcmp(rcvd_msg[j],"\n") == 0)
 						break;	
@@ -618,17 +692,29 @@ void rcvMSG()
 				fprintf(fp,"%s\n",dec_text);
 				fclose(fp);
 
+				// char *decode_msg = concat(base64_dec_cmd, "cipher_text.txt");
+				// decode_msg = concat(decode_msg," -out cipher_text.bin");
 
-				 char *dec_text_cmd = concat("echo ",dec_text);
-				dec_text_cmd = concat(dec_text_cmd," | openssl enc -aes-256-cbc -d -base64 -pass pass:");
-				 //dec_text_cmd = concat(" | openssl enc -aes-256-cbc -d -base64 -pass pass:",dec_key);
-				dec_text_cmd = concat(dec_text_cmd,dec_key);
+				 //char *dec_text_cmd = concat("echo \"",dec_text);
+
+				//dec_text_cmd = concat(dec_text_cmd,"\"");
+				//dec_text_cmd = concat(dec_text_cmd," \\\n | openssl enc -aes-256-cbc -d -base64 -pass pass:");
+				char *dec_text_cmd = concat("openssl enc -aes-256-cbc -d -in cipher_text.txt -base64 -pass pass:",dec_key);
+				//dec_text_cmd = concat(dec_text_cmd,dec_key);
+				//dec_text_cmd = concat(dec_text_cmd," -in cipher_text.txt");
 				//dec_text_cmd = concat(dec_text_cmd," -in cipher_text.txt.enc");
 				
 
 				//printf("%s",dec_text_cmd);
 				system(dec_text_cmd);
 
+				//system("cat result.txt");
+				// char result[EMAIL_MAX_LENGTH];
+				// pp = popen(dec_text_cmd,"r");
+				// fgets(result, sizeof(result)-1, pp);
+				// pclose(pp);
+
+				printf("\n");
 
 
 		 	}
